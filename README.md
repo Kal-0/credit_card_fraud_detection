@@ -26,7 +26,8 @@ Arquivos CSV ingeridos na camada RAW:
 | `orders.csv` | Pedidos realizados pelos clientes |
 | `order_products__prior.csv` | Produtos de pedidos anteriores |
 | `order_products__train.csv` | Produtos de pedidos de treino |
-| `products.csv` | Catalogo de produtos |
+| `products.csv` | Catálogo de produtos |
+| `prices.csv` | Preço sintético dos produtos |
 | `aisles.csv` | Corredores do supermercado |
 | `departments.csv` | Departamentos do supermercado |
 
