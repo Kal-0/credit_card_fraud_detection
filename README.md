@@ -21,19 +21,19 @@ O pipeline é construído sobre **Apache Spark (PySpark)** no Databricks, organi
 
 Arquivos CSV ingeridos na camada RAW:
 
-| Arquivo | Descricao |
+| Arquivo | Descrição |
 |---|---|
 | `orders.csv` | Pedidos realizados pelos clientes |
 | `order_products__prior.csv` | Produtos de pedidos anteriores |
 | `order_products__train.csv` | Produtos de pedidos de treino |
 | `products.csv` | Catálogo de produtos |
-| `prices.csv` | Preço sintético dos produtos |
+| `prices.csv` | Preços sintéticos dos produtos |
 | `aisles.csv` | Corredores do supermercado |
 | `departments.csv` | Departamentos do supermercado |
 
 ---
 
-## Stack Tecnologica
+## Stack Tecnológica
 
 | Camada | Tecnologia |
 |---|---|
@@ -41,28 +41,29 @@ Arquivos CSV ingeridos na camada RAW:
 | Processamento | Apache Spark / PySpark |
 | Armazenamento | Delta Lake |
 | Linguagem | Python 3.x |
-| Visualizacao | Matplotlib, Seaborn |
+| Visualização | Databricks `display()` |
 | Formato de dados | CSV (Raw), Delta Tables (Bronze/Silver/Gold) |
 
 ---
 
-## Estrutura do Repositorio
+## Estrutura do Repositório
 
 ```
 .
 ├── SRC/
 │   └── ETL/
 │       ├── 0.RAW/
-│       │   └── ingest_Instacart_kaggle.ipynb       # Ingestao dos dados brutos do Kaggle
+│       │   └── ingest_Instacart_kaggle.ipynb       # Ingestão dos dados brutos do Kaggle
 │       ├── 1.BRONZE/
-│       │   └── update_bronze_tables.ipynb          # CSV bruto -> Delta Tables (sem transformacoes)
+│       │   └── update_bronze_tables.ipynb          # CSV bruto -> Delta Tables (sem transformações)
 │       ├── 2.SILVER/
 │       │   └── update_silver_tables.ipynb          # Limpeza, tipagem, enriquecimento
 │       └── 3.GOLD/
-│           └── analysis_gold_tables.ipynb          # Agregacoes e metricas de negocio
+│           └── analysis_gold_tables.ipynb          # Agregações e métricas de negócio
 ├── docs/
 │   ├── arquitetura.md                              # Diagrama Medallion e detalhes da arquitetura
-│   └── pipeline.md                                 # Descricao detalhada de cada etapa do pipeline
+│   ├── diagram.md                                  # Diagrama ASCII da arquitetura e fluxo de dados
+│   └── pipeline.md                                 # Descrição detalhada de cada etapa do pipeline
 ├── .gitignore
 └── README.md
 ```
@@ -72,7 +73,7 @@ Arquivos CSV ingeridos na camada RAW:
 ## Como Executar no Databricks
 
 1. Acesse sua workspace do Databricks.
-2. Va em **Workspace** → **Create** → **Git Folder** e cole o link do repositorio.
+2. Vá em **Workspace** → **Create** → **Git Folder** e cole o link do repositório.
 3. Crie ou selecione um cluster (Runtime com Spark).
 4. Execute os notebooks na ordem das camadas: RAW → BRONZE → SILVER → GOLD.
 5. Os resultados ficam disponíveis como tabelas Delta no schema `big_data.*`.
@@ -81,10 +82,11 @@ Mais detalhes em [docs/arquitetura.md](docs/arquitetura.md).
 
 ---
 
-## Documentacao
+## Documentação
 
 - [Arquitetura Medallion e Diagrama](docs/arquitetura.md)
-- [Descricao do Pipeline](docs/pipeline.md)
+- [Diagrama ASCII do Fluxo de Dados](docs/diagram.md)
+- [Descrição do Pipeline](docs/pipeline.md)
 
 ---
 
@@ -95,6 +97,6 @@ Mais detalhes em [docs/arquitetura.md](docs/arquitetura.md).
 
 ---
 
-## Licenca
+## Licença
 
-MIT — Livre para uso academico.
+MIT — Livre para uso acadêmico.

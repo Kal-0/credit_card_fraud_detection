@@ -1,8 +1,3 @@
-# Medallion Architecture - Instacart ETL Pipeline
-
-## Dataset
-
-
 ## Architecture Diagram
 
 ```
@@ -10,6 +5,8 @@
 │                              RAW LAYER                                      │
 │  Location: /Volumes/big_data/raw/data/instacart/                            │
 │  Format: CSV Files (Source Data)                                            │
+│  Notebook: ingest_Instacart_kaggle                                          │
+│  Process: Kaggle API → Download & Unzip → Copy to Unity Catalog Volume      │
 └─────────────────────────────────────────────────────────────────────────────┘
                                   │
                 ┌─────────────────┼─────────────────┐
@@ -111,112 +108,15 @@
       │                           │                         │   • reorder_rate
       ├─► sales_by_hour           ├─► customer_purchase_    │
       │   • Hourly patterns       │    frequency            ├─► department_performance
-      │   • Peak hours            │   • 1-7, 8-14, 15-21,   │   • unique_products
+      │   • Peak hours            │   • 1-7, 8-14, 15-21,  │   • unique_products
       │                           │     22-30, 30+ days     │   • total_items_sold
-      │                           │                         │   • avg_items_per_order
-      │                           │                         │
-      ├─► reorder_analysis_       │                         ├─► reorder_analysis_by_aisle
-      │   by_department           │                         │   • total_items
-      │   • total_items           │                         │   • reordered_items
-      │   • reordered_items       │                         │   • reorder_rate
-      │   • reorder_rate          │                         │
-      │                           │                         ├─► sales_by_price_band
-      │                           │                         │   • total_orders
-      │                           │                         │   • total_revenue
-      │                           │                         │   • avg_order_value
-      │                           │                         │   By band: Very Low, Low,
-      │                           │                         │   Medium, High, Premium, Luxury
-      │
+      │                           │                         │   • unique_orders
+      ├─► reorder_analysis_       │                         │   • reordered_items
+      │   by_department           │                         │   • reorder_rate
+      │   • total_items           │                         │   • avg_items_per_order
+      │   • reordered_items       │                         │
+      │   • reorder_rate          │                         ├─► reorder_analysis_by_aisle
+      │                           │                         │   • total_items
+      │                           │                         │   • reordered_items
+      │                           │                         │   • reorder_rate
 ```
-
-## Layer Details
-
-### RAW Layer
-- Location: /Volumes/big_data/raw/data/instacart/
-- Format: CSV files
-- Files: 
-  - departments.csv
-  - aisles.csv
-  - products.csv
-  - orders.csv
-  - order_products__prior.csv
-  - order_products__train.csv
-  - prices.csv (Product pricing data)
-
-### BRONZE Layer
-- Schema: big_data.bronze
-- Notebook: update_bronze_tables
-- Format: Delta Tables
-- Transformations:
-  - CSV → Delta format conversion
-  - Add ingestion_timestamp
-  - Add source_file reference
-- Tables: departments, aisles, products, orders, order_products_prior, order_products_train, prices
-
-### SILVER Layer
-- Schema: big_data.silver
-- Notebook: update_silver_tables
-- Format: Delta Tables (Cleaned & Enriched)
-- Transformations:
-  - Data Quality: Type casting, null filtering, data validation
-  - Feature Engineering: 
-  - is_first_order (boolean flag)
-  - period_of_day (morning/afternoon/evening/night)
-  - Enrichment: 
-  - Join products with aisles and departments
-  - Join products with prices
-  - price_band: Very Low/Low/Medium/High/Premium/Luxury
-  - Consolidation: Merge prior + train datasets
-- Tables: orders, products_enriched, order_products
-
-### GOLD Layer
-- Schema: big_data.gold
-- Notebook: analysis_gold_tables
-- Format: Delta Tables (Aggregated Metrics)
-- Categories:
-  Sales Analytics:
-  - sales_by_time_period - Orders by period of day
-  - sales_by_hour - Hourly sales patterns
-  - reorder_analysis_by_department - Department-level reorder rates
-  - reorder_analysis_by_aisle - Aisle-level reorder rates
-  
-  Customer Analytics:
-  - customer_segmentation - Customer loyalty segments
-  - customer_purchase_frequency - Time between orders distribution
-  
-  Product Analytics:
-  - product_performance - Top products by orders and reorders
-  - department_performance - Department sales metrics
-  - sales_by_price_band - Sales metrics segmented by price band (Very Low, Low, Medium, High, Premium, Luxury)
-
-
-## Data Flow Summary
-
-1. Ingestion (RAW → BRONZE)
-   - Read CSV files from volume storage
-   - Convert to Delta format with metadata
-   - No business logic applied
-
-2. Transformation (BRONZE → SILVER)
-   - Apply data quality rules
-   - Type casting and validation
-   - Feature engineering (time periods, first order flags)
-   - Enrich products with category and pricing information
-   - Create price band categories for price segmentation
-   - Combine prior and train datasets
-
-3. Aggregation (SILVER → GOLD)
-   - Calculate business KPIs
-   - Create customer segmentation
-   - Analyze sales patterns by time and price band
-   - Measure product and category performance
-   - Generate reorder analytics
-
-
-## Technologies Used
-
-- Storage: Databricks Volumes (Unity Catalog)
-- Format: Delta Lake
-- Processing: PySpark
-- Orchestration: Databricks Notebooks
-

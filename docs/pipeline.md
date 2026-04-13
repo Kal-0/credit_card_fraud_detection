@@ -68,27 +68,29 @@ Metadado adicionado: `_silver_timestamp`.
 
 **Schema:** `big_data.gold`
 
-Camada analítica. Os dados da Silver são agregados e transformados em tabelas de negócio prontas para consumo por analistas e ferramentas de visualização.
+Camada analítica (em progresso). Os dados da Silver são agregados e transformados em tabelas de negócio para consumo por analistas e ferramentas de visualização.
 
-Grupos de tabelas geradas:
+Tabelas geradas:
 
 **Sales Analytics**
-- Distribuição de vendas por período do dia e hora.
-- Taxa de recompra por departamento.
+- `sales_by_time_period` — total de pedidos, itens vendidos e percentual por período do dia.
+- `sales_by_hour` — padrões de compra por hora, identificação de horários de pico.
+- `reorder_analysis_by_department` — total de itens, itens recomprados e taxa de recompra por departamento.
 
 **Customer Analytics**
-- Segmentação de clientes por frequência de compra.
-- Distribuição de intervalo entre pedidos.
+- `customer_segmentation` — segmentos: New / Occasional / Regular / Frequent / Loyal.
+- `customer_purchase_frequency` — distribuição por intervalo de dias entre compras (1-7, 8-14, 15-21, 22-30, 30+).
 
 **Product Analytics**
-- Performance individual de produtos (volume, recompra).
-- Performance por departamento e corredor.
+- `product_performance` — vezes comprado, pedidos únicos, vezes recomprado, taxa de recompra.
+- `department_performance` — produtos únicos, total vendido, pedidos únicos, itens recomprados, taxa de recompra, média de itens por pedido.
+- `reorder_analysis_by_aisle` — total de itens, itens recomprados e taxa de recompra por corredor.
 
 Os resultados ficam disponíveis como tabelas Delta no schema `big_data.gold`, consumíveis diretamente via SQL no Databricks ou por notebooks de visualização.
 
 ---
 
-## Checklist AV1
+## Checklist
 
 | Etapa | Status |
 |---|---|
@@ -96,17 +98,3 @@ Os resultados ficam disponíveis como tabelas Delta no schema `big_data.gold`, c
 | Armazenamento Bronze | Finalizado |
 | Transformação Silver | Finalizado |
 | Camada Gold (Analítica) | Em progresso |
-
----
-
-## Divisão de Tarefas
-
-| Membro | Responsabilidade |
-|---|---|
-| Caio Hirata | Arquitetura Medallion, notebook Bronze |
-| Camila Cirne | Transformações Silver, qualidade de dados |
-| Diogo Correia | Ingestão RAW, configuração Databricks |
-| Flavio Muniz | Camada Gold, métricas de negócio |
-| Pedro Coelho | Documentação, diagrama de arquitetura |
-| Virna Amaral | Análise exploratória, visualizações |
-

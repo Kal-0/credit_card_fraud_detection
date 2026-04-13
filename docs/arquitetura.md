@@ -48,6 +48,7 @@ Metadado adicionado: `_silver_timestamp`.
 - **Schema:** `big_data.gold`
 - **Formato:** Delta Tables.
 - **Notebook:** `SRC/ETL/3.GOLD/analysis_gold_tables.ipynb`
+- **Status:** Em progresso
 - **Descrição:** Camada analítica com agregações e métricas de negócio prontas para consumo.
 
 Tabelas geradas:
@@ -55,16 +56,16 @@ Tabelas geradas:
 **Sales Analytics**
 - `sales_by_time_period` — total de pedidos, itens vendidos e percentual por período do dia.
 - `sales_by_hour` — padrões de compra por hora, identificação de horários de pico.
-- `reorder_analysis_by_department` — taxa de recompra por departamento.
+- `reorder_analysis_by_department` — total de itens, itens recomprados e taxa de recompra por departamento.
 
 **Customer Analytics**
 - `customer_segmentation` — segmentos: New / Occasional / Regular / Frequent / Loyal.
 - `customer_purchase_frequency` — distribuição por intervalo de dias entre compras.
 
 **Product Analytics**
-- `product_performance` — vezes comprado, pedidos únicos, taxa de recompra.
-- `department_performance` — produtos únicos, total vendido, média de itens por pedido.
-- `reorder_analysis_by_aisle` — taxa de recompra por corredor.
+- `product_performance` — vezes comprado, pedidos únicos, vezes recomprado, taxa de recompra.
+- `department_performance` — produtos únicos, total vendido, pedidos únicos, itens recomprados, taxa de recompra, média de itens por pedido.
+- `reorder_analysis_by_aisle` — total de itens, itens recomprados e taxa de recompra por corredor.
 
 ---
 
@@ -73,61 +74,110 @@ Tabelas geradas:
 ```mermaid
 flowchart TD
 
-classDef raw fill:#f5f5f5,stroke:#9e9e9e,stroke-width:1px;
-classDef bronze fill:#efebe9,stroke:#8d6e63,stroke-width:1px;
-classDef silver fill:#eceff1,stroke:#78909c,stroke-width:1px;
-classDef gold fill:#fff8e1,stroke:#ffca28,stroke-width:1px;
+    classDef raw fill:#f5f5f5,stroke:#9e9e9e,stroke-width:2px,color:#424242
+    classDef bronze fill:#efebe9,stroke:#8d6e63,stroke-width:2px,color:#4e342e
+    classDef silver fill:#eceff1,stroke:#78909c,stroke-width:2px,color:#263238
+    classDef gold fill:#fff8e1,stroke:#f9a825,stroke-width:2px,color:#e65100
+    classDef layer fill:none,stroke:#bdbdbd,stroke-width:2px,stroke-dasharray:6
 
-subgraph RAW["RAW LAYER — /Volumes/big_data/raw/data/instacart/"]
+    %% ───────────────────────── RAW LAYER ─────────────────────────
+    subgraph RAW["RAW — /Volumes/big_data/raw/data/instacart/"]
         direction LR
-        R1["departments.csv"]:::raw
-        R2["aisles.csv"]:::raw
-        R3["products.csv"]:::raw
-        R4["orders.csv"]:::raw
-        R5["prices.csv"]:::raw
-        R6["order_products__prior.csv"]:::raw
-        R7["order_products__train.csv"]:::raw
-end
+        R_dept["departments.csv"]:::raw
+        R_aisle["aisles.csv"]:::raw
+        R_prod["products.csv"]:::raw
+        R_price["prices.csv"]:::raw
+        R_ord["orders.csv"]:::raw
+        R_prior["order_products__prior.csv"]:::raw
+        R_train["order_products__train.csv"]:::raw
+    end
+    class RAW layer
 
-subgraph BRONZE["BRONZE LAYER — big_data.bronze"]
+    %% ───────────────────────── BRONZE LAYER ─────────────────────────
+    subgraph BRONZE["BRONZE — big_data.bronze"]
         direction LR
-        B1["departments"]:::bronze
-        B2["aisles"]:::bronze
-        B3["products"]:::bronze
-        B4["orders"]:::bronze
-        B5["prices"]:::bronze
-        B6["order_products_prior"]:::bronze
-        B7["order_products_train"]:::bronze
-end
+        B_dept["departments"]:::bronze
+        B_aisle["aisles"]:::bronze
+        B_prod["products"]:::bronze
+        B_price["prices"]:::bronze
+        B_ord["orders"]:::bronze
+        B_prior["order_products_prior"]:::bronze
+        B_train["order_products_train"]:::bronze
+    end
+    class BRONZE layer
 
-subgraph SILVER["SILVER LAYER — big_data.silver"]
-        direction LR
-        S1["orders\n+ is_first_order\n+ period_of_day"]:::silver
-        S2["products_enriched\n+ aisle + department + prices"]:::silver
-        S3["order_products\n(prior + train unificados)"]:::silver
-end
+    %% RAW → BRONZE (1:1 ingestion)
+    R_dept  --> B_dept
+    R_aisle --> B_aisle
+    R_prod  --> B_prod
+    R_price --> B_price
+    R_ord   --> B_ord
+    R_prior --> B_prior
+    R_train --> B_train
 
-subgraph GOLD["GOLD LAYER — big_data.gold"]
+    %% ───────────────────────── SILVER LAYER ─────────────────────────
+    subgraph SILVER["SILVER — big_data.silver"]
         direction LR
-        subgraph SALES["Sales Analytics"]
-                G1["sales_by_time_period"]:::gold
-                G2["sales_by_hour"]:::gold
-                G3["reorder_analysis_by_department"]:::gold
+        S_ord["orders
+        ──────────────
+        + is_first_order
+        + period_of_day"]:::silver
+
+        S_prod["products_enriched
+        ──────────────
+        + aisle, department
+        + price_usd, price_band"]:::silver
+
+        S_op["order_products
+        ──────────────
+        prior + train unified
+        + dataset flag"]:::silver
+    end
+    class SILVER layer
+
+    %% BRONZE → SILVER (data lineage)
+    B_ord   --> S_ord
+    B_prod  --> S_prod
+    B_aisle --> S_prod
+    B_dept  --> S_prod
+    B_price --> S_prod
+    B_prior --> S_op
+    B_train --> S_op
+
+    %% ───────────────────────── GOLD LAYER ─────────────────────────
+    subgraph GOLD["GOLD — big_data.gold"]
+        subgraph G_SALES["Sales Analytics"]
+            G1["sales_by_time_period"]:::gold
+            G2["sales_by_hour"]:::gold
+            G3["reorder_analysis_by_department"]:::gold
         end
-        subgraph CUSTOMER["Customer Analytics"]
-                G4["customer_segmentation"]:::gold
-                G5["customer_purchase_frequency"]:::gold
+        subgraph G_CUST["Customer Analytics"]
+            G4["customer_segmentation"]:::gold
+            G5["customer_purchase_frequency"]:::gold
         end
-        subgraph PRODUCT["Product Analytics"]
-                G6["product_performance"]:::gold
-                G7["department_performance"]:::gold
-                G8["reorder_analysis_by_aisle"]:::gold
+        subgraph G_PROD["Product Analytics"]
+            G6["product_performance"]:::gold
+            G7["department_performance"]:::gold
+            G8["reorder_analysis_by_aisle"]:::gold
         end
-end
+    end
+    class GOLD layer
 
-RAW -->|"Ingestão — CSV to Delta"| BRONZE
-BRONZE -->|"Data Quality + Enrichment"| SILVER
-SILVER -->|"Business Metrics + Aggregations"| GOLD
+    %% SILVER → GOLD (data lineage)
+    S_ord  --> G1
+    S_op   --> G1
+    S_ord  --> G2
+    S_op   --> G2
+    S_op   --> G3
+    S_prod --> G3
+    S_ord  --> G4
+    S_ord  --> G5
+    S_op   --> G6
+    S_prod --> G6
+    S_op   --> G7
+    S_prod --> G7
+    S_op   --> G8
+    S_prod --> G8
 ```
 
 ---
@@ -159,5 +209,5 @@ SRC/
 | Linguagem | Python 3.x |
 | Formato de origem | CSV |
 | Formato de destino | Delta Tables |
-| Visualização | Matplotlib, Seaborn |
+| Visualização | Databricks `display()` |
 | Controle de versão | Git / GitHub |
